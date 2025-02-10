@@ -4,12 +4,14 @@ import android.annotation.SuppressLint
 import dev.brahmkshatriya.echo.common.Extension
 import dev.brahmkshatriya.echo.common.LyricsExtension
 import dev.brahmkshatriya.echo.common.MusicExtension
+import dev.brahmkshatriya.echo.common.clients.AlbumClient
 import dev.brahmkshatriya.echo.common.clients.LyricsClient
 import dev.brahmkshatriya.echo.common.helpers.FileProgress
 import dev.brahmkshatriya.echo.common.helpers.FileTask
 import dev.brahmkshatriya.echo.common.helpers.PagedData
 import dev.brahmkshatriya.echo.common.helpers.Progress
 import dev.brahmkshatriya.echo.common.helpers.SuspendedFunction
+import dev.brahmkshatriya.echo.common.models.Album
 import dev.brahmkshatriya.echo.common.models.DownloadContext
 import dev.brahmkshatriya.echo.common.models.ImageHolder
 import dev.brahmkshatriya.echo.common.models.Lyrics
@@ -86,14 +88,16 @@ class TagTask(
                 ""
             }
         }
+        val extension = musicExtensions.getExtension(context.extensionId)
+        val album = loadAlbum(extension, track)
 
         val fileExtension = file.extension.lowercase()
         println("File extension: $fileExtension")
         runCatching {
             if (fileExtension == "mp3" || fileExtension == "m4a" && !isVideo) {
-                jAudioTagger(file, track, coverFile, lyricsText)
+                jAudioTagger(file, track, coverFile, lyricsText, album)
             } else {
-                ffmpegTag(file, track, coverFile, lyricsText, fileExtension, isVideo)
+                ffmpegTag(file, track, coverFile, lyricsText, fileExtension, album, isVideo)
             }
         }.getOrElse { e ->
             when ("Video file") {
@@ -113,7 +117,8 @@ class TagTask(
         file: File,
         track: Track,
         coverFile: File?,
-        lyricsText: String
+        lyricsText: String,
+        album: Album?
     ) {
         TagOptionSingleton.getInstance().isAndroid = true
 
@@ -123,6 +128,7 @@ class TagTask(
         tag.setField(FieldKey.TRACK, (context.sortOrder ?: 0).toString())
         tag.setField(FieldKey.TITLE, illegalChars.replace(track.title, "_"))
         tag.setField(FieldKey.ARTIST, track.artists.joinToString(", ") { it.name })
+        tag.setField(FieldKey.ALBUM_ARTIST, album?.artists.orEmpty().joinToString(", ") { it.name })
         tag.setField(
             FieldKey.ALBUM,
             illegalChars.replace(track.album?.title.orEmpty(), "_")
@@ -145,6 +151,7 @@ class TagTask(
         coverFile: File?,
         lyricsText: String,
         fileExtension: String,
+        album: Album?,
         isVideo: Boolean
     ) {
         val mp4File = if(fileExtension == "m4a" && isVideo) {
@@ -159,6 +166,7 @@ class TagTask(
         val metadataOrder = "track=\"${context.sortOrder ?: 0}\""
         val metadataTitle = "title=\"${illegalChars.replace(track.title, "_")}\""
         val metadataArtist = "artist=\"${track.artists.joinToString(", ") { it.name }}\""
+        val metadataAlbumArtist = "albumartist=\"${album?.artists.orEmpty().joinToString(", ") { it.name }}\""
         val metadataAlbum =
             "album=\"${illegalChars.replace(track.album?.title.orEmpty(), "_")}\""
 
@@ -185,6 +193,7 @@ class TagTask(
             append("-metadata $metadataTitle ")
             append("-metadata $metadataArtist ")
             append("-metadata $metadataAlbum ")
+            append("-metadata $metadataAlbumArtist ")
             append("-metadata lyrics=\"${lyricsText.replace("\"", "'")}\" ")
             if (isVideo) {
                 append("-metadata:s:v:1 $metadataCoverTitle ")
@@ -208,8 +217,17 @@ class TagTask(
         coverFile?.delete()
     }
 
+    private suspend fun loadAlbum(
+        extension: Extension<*>?,
+        track: Track
+    ): Album? {
+        return extension?.get<AlbumClient, Album?> {
+            track.album?.let { loadAlbum(it) }
+        }?.getOrNull() ?: track.album
+    }
+
     private suspend fun saveCoverBitmap(file: File, track: Track): File? {
-        val coverFile = File(file.parent, "cover_temp.jpeg")
+        val coverFile = File(file.parent, "cover_temp_${track.hashCode()}.jpeg")
         if (coverFile.exists() && !coverFile.delete()) return null
         return runCatching {
             val holder = track.cover as? ImageHolder.UrlRequestImageHolder

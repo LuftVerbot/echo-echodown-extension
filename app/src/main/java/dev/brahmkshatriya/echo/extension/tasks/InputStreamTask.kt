@@ -37,6 +37,8 @@ class InputStreamTask(
                 Downloader.download(file, stream, totalBytes, append, progressFlow, receiveFlow)
             }.getOrElse {
                 file.delete()
+                job?.cancel()
+                job = null
                 return@launch progressFlow.emit(Progress.Final.Failed(it))
             }
             progressFlow.emit(Progress.Final.Completed(file.length(), file))

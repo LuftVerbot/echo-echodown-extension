@@ -7,6 +7,7 @@ import dev.brahmkshatriya.echo.common.helpers.SuspendedFunction
 import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.extension.Downloader
 import dev.brahmkshatriya.echo.extension.FFMpegHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,10 +28,12 @@ class HttpDownloadTask(
 
     override val start = SuspendedFunction {
         job?.cancel()
-        job = launch {
+        job = launch(Dispatchers.IO) {
             val result = if (isFFmpeg) ffmpegDownload() else okHttpDownload()
             val file = result.getOrElse {
                 file.delete()
+                job?.cancel()
+                job = null
                 progressFlow.emit(Progress.Final.Failed(it))
                 return@launch
             }

@@ -28,18 +28,15 @@ object FFMpegHelper {
         cont.invokeOnCancellation { session.cancel() }
     }
 
-    private val mutex = Mutex()
     private suspend fun executeProbe(
         command: String,
         onLog: suspend (String?) -> Unit = {}
-    ): FFprobeSession = mutex.withLock {
-        suspendCancellableCoroutine { cont ->
-            val session = FFprobeKit.executeAsync(command, {
-                if (it.returnCode.isValueSuccess) cont.resume(it)
-                else cont.resumeWithException(Exception(it.output))
-            }, { runBlocking { onLog(it.message) } })
-            cont.invokeOnCancellation { session.cancel() }
-        }
+    ): FFprobeSession = suspendCancellableCoroutine { cont ->
+        val session = FFprobeKit.executeAsync(command, {
+            if (it.returnCode.isValueSuccess) cont.resume(it)
+            else cont.resumeWithException(Exception(it.output))
+        }, { runBlocking { onLog(it.message) } })
+        cont.invokeOnCancellation { session.cancel() }
     }
 
     suspend fun probeFileFormat(file: File): String {
