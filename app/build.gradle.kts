@@ -9,11 +9,17 @@ dependencies {
     implementation(project(":ext"))
     val libVersion: String by project
     compileOnly("com.github.brahmkshatriya:echo:$libVersion")
+    implementation("com.arthenica:ffmpeg-kit-https:6.0-2")
+    implementation("net.jthink:jaudiotagger:3.0.1")
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 val extType: String by project
 val extId: String by project
-val extClass: String by project
+val extClass: String = "AndroidED"
 
 val extIconUrl: String? by project
 val extName: String by project
@@ -28,7 +34,7 @@ val extUpdateUrl: String? by project
 val gitHash = execute("git", "rev-parse", "HEAD").take(7)
 val gitCount = execute("git", "rev-list", "--count", "HEAD").toInt()
 val verCode = gitCount
-val verName = "v$gitHash"
+val verName = gitHash
 
 tasks.register("uninstall") {
     exec {
@@ -50,6 +56,7 @@ android {
             put("type", "dev.brahmkshatriya.echo.${extType}")
             put("id", extId)
             put("class_path", "dev.brahmkshatriya.echo.extension.${extClass}")
+            put("preserved_packages", "com.arthenica.ffmpegkit")
             put("version", verName)
             put("version_code", verCode.toString())
             put("icon_url", extIconUrl ?: "")
@@ -60,6 +67,15 @@ android {
             put("author_url", extAuthorUrl ?: "")
             put("repo_url", extRepoUrl ?: "")
             put("update_url", extUpdateUrl ?: "")
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = false
         }
     }
 

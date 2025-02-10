@@ -16,6 +16,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "extension"
+rootProject.name = ext["extName"] as String
 include(":app")
 include(":ext")

@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
     id("com.gradleup.shadow") version "8.3.0"
     id("maven-publish")
+    /** PROTOBUF **/
 }
 
 java {
@@ -21,9 +22,8 @@ dependencies {
     val libVersion: String by project
     compileOnly("com.github.brahmkshatriya:echo:$libVersion")
 
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
-    testImplementation("com.github.brahmkshatriya:echo:$libVersion")
+    /** PROTOBUF **/
+    /** BCPROV **/
 }
 
 // Extension properties goto `gradle.properties` to set values
@@ -45,7 +45,7 @@ val extUpdateUrl: String? by project
 val gitHash = execute("git", "rev-parse", "HEAD").take(7)
 val gitCount = execute("git", "rev-list", "--count", "HEAD").toInt()
 val verCode = gitCount
-val verName = "v$gitHash"
+val verName = gitHash
 
 publishing {
     publications {
@@ -87,6 +87,20 @@ tasks {
         }
     }
 }
+
+/**
+ *
+ *
+ *
+ *
+ *
+ * PROTOBUF
+ *
+ *
+ *
+ *
+ *
+ **/
 
 fun execute(vararg command: String): String {
     val outputStream = ByteArrayOutputStream()
