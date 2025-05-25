@@ -30,3 +30,4 @@ Ensure you have Echo installed on your device before proceeding. Currently it's 
 
 - **[@brahmkshatriya](https://github.com/brahmkshatriya)** was a huge help and the one who made most of this possible.  
 - **[Echo](https://github.com/brahmkshatriya/echo)**: Created by [@brahmkshatriya](https://github.com/brahmkshatriya).
+- **[FFmpeg](https://github.com/arthenica/ffmpeg-kit)**: Custom version by [@imjyotiraditya](https://github.com/imjyotiraditya).

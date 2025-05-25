@@ -7,8 +7,6 @@ import com.arthenica.ffmpegkit.FFprobeSession
 import com.arthenica.ffmpegkit.Statistics
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
